@@ -1009,244 +1009,171 @@
             animation: fadeIn 0.6s ease-out;
         }
 
-        /* ══════════════════════════════════════════
-           FLOATING CV DOWNLOAD BUTTON — PREMIUM
-           ══════════════════════════════════════════ */
+        /* ── Floating Button — Premium Dark Edition ── */
 
-        /* Ripple keyframe */
-        @keyframes btn-ripple {
-            0%   { transform: scale(0.85); opacity: 0.6; }
-            70%  { transform: scale(1.6);  opacity: 0.15; }
-            100% { transform: scale(2.2);  opacity: 0; }
+        @keyframes fb-pulse-ring {
+            0%   { transform: translate(-50%, -50%) scale(1);   opacity: 0.55; }
+            80%  { transform: translate(-50%, -50%) scale(1.9); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1.9); opacity: 0; }
         }
 
-        /* Slow rotating border */
-        @keyframes btn-spin {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
+        @keyframes fb-spin-border {
+            to { transform: rotate(360deg); }
         }
 
-        /* Subtle floating pulse on the button itself */
-        @keyframes btn-float {
-            0%, 100% { transform: translateY(0); }
-            50%       { transform: translateY(-6px); }
+        @keyframes fb-float {
+            0%, 100% { box-shadow:
+                0 8px 30px rgba(37,99,235,0.45),
+                0 2px 10px rgba(124,58,237,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.12);
+            }
+            50% { box-shadow:
+                0 18px 45px rgba(37,99,235,0.55),
+                0 6px 20px rgba(124,58,237,0.4),
+                inset 0 1px 0 rgba(255,255,255,0.18);
+                transform: translateY(-6px);
+            }
         }
 
-        /* Icon bounce on load */
-        @keyframes btn-icon-drop {
-            0%   { transform: translateY(-10px); opacity: 0; }
-            60%  { transform: translateY(3px);   opacity: 1; }
+        @keyframes fb-icon-fall {
+            0%   { transform: translateY(-4px); opacity: 0; }
+            60%  { transform: translateY(2px);  opacity: 1; }
             100% { transform: translateY(0); }
         }
 
-        /* Download arrow animation on hover */
-        @keyframes arrow-drop {
-            0%   { transform: translateY(0) translateX(-50%); opacity: 1; }
-            50%  { transform: translateY(6px) translateX(-50%); opacity: 0; }
-            51%  { transform: translateY(-8px) translateX(-50%); opacity: 0; }
-            100% { transform: translateY(0) translateX(-50%); opacity: 1; }
-        }
-
-        /* Wrapper — positions everything together */
-        .floating-btn-wrapper {
-            position: fixed;
-            bottom: 148px;
-            right: 28px;
-            z-index: 998;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0;
-            filter: drop-shadow(0 12px 32px rgba(0,0,0,0.55));
-        }
-
-        /* Tooltip label above the button */
-        .floating-btn-label {
-            background: #0a0a0f;
-            color: #e2e8f0;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            padding: 5px 12px;
-            border-radius: 20px;
-            margin-bottom: 8px;
-            border: 1px solid rgba(255,255,255,0.08);
-            opacity: 0;
-            transform: translateY(6px);
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            white-space: nowrap;
-            pointer-events: none;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-        }
-
-        .floating-btn-wrapper:hover .floating-btn-label {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Spinning decorative ring behind button */
-        .floating-btn-ring {
-            position: absolute;
-            inset: -6px;
-            border-radius: 50%;
-            background: conic-gradient(
-                from 0deg,
-                #2563eb 0%,
-                #7c3aed 25%,
-                #06b6d4 50%,
-                #2563eb 75%,
-                #7c3aed 100%
-            );
-            animation: btn-spin 4s linear infinite;
-            z-index: 0;
-        }
-
-        /* Dark mask to show only the outer ring stroke */
-        .floating-btn-ring::after {
-            content: '';
-            position: absolute;
-            inset: 4px;
-            border-radius: 50%;
-            background: #0a0a0f;
-        }
-
-        /* The main button */
         .floating-btn {
-            position: relative;
-            width: 72px;
-            height: 72px;
-            background: #0a0a0f;
+            position: fixed;
+            bottom: 140px;
+            right: 30px;
+            width: 68px;
+            height: 68px;
+
+            /* Dark rich background */
+            background: radial-gradient(circle at 38% 32%,
+                #1e2a4a 0%,
+                #0d1117 55%,
+                #0a0c14 100%);
+
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.6rem;
+            font-size: 1.55rem;
             text-decoration: none;
-            border: none;
             cursor: pointer;
+            border: none;
+            z-index: 998;
             overflow: visible;
-            z-index: 1;
-            animation: btn-float 3.5s ease-in-out infinite;
-            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1),
-                        box-shadow 0.3s ease;
+
+            /* Glowing multi-layer border via outline trick */
+            outline: 2.5px solid transparent;
+            outline-offset: 2px;
+
+            /* Animated floating shadow */
+            animation: fb-float 3.5s ease-in-out infinite;
+            transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1),
+                        background 0.3s ease;
         }
 
-        /* Inner dark circle that sits above the ring */
+        /* Conic-gradient spinning ring */
         .floating-btn::before {
             content: '';
             position: absolute;
-            inset: 3px;
+            inset: -3.5px;
             border-radius: 50%;
-            background: linear-gradient(145deg, #141420 0%, #0a0a0f 60%, #0f0f1a 100%);
-            z-index: 0;
+            background: conic-gradient(
+                from 0deg,
+                #2563eb 0%,
+                #7c3aed 30%,
+                #06b6d4 55%,
+                #3b82f6 75%,
+                #2563eb 100%
+            );
+            animation: fb-spin-border 3.2s linear infinite;
+            z-index: -1;
         }
 
-        /* Hover glow fill overlay */
+        /* Mask to show ring only as a thin border */
         .floating-btn::after {
             content: '';
             position: absolute;
-            inset: 3px;
+            inset: 2.5px;
             border-radius: 50%;
-            background: radial-gradient(circle at 40% 35%,
-                rgba(37,99,235,0.45) 0%,
-                rgba(124,58,237,0.30) 55%,
-                transparent 100%);
-            opacity: 0;
-            transition: opacity 0.35s ease;
+            background: radial-gradient(circle at 38% 32%,
+                #1e2a4a 0%,
+                #0d1117 55%,
+                #0a0c14 100%);
             z-index: 0;
+            transition: background 0.3s ease;
         }
 
+        /* Hover: reveal inner glow */
         .floating-btn:hover::after {
-            opacity: 1;
+            background: radial-gradient(circle at 38% 32%,
+                #1e3a6e 0%,
+                #0d1a2e 50%,
+                #0a0c1a 100%);
         }
 
-        /* Icon */
+        /* Icon sits above the pseudo-elements */
         .floating-btn i {
             position: relative;
-            z-index: 2;
-            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #34d399 100%);
+            z-index: 1;
+            background: linear-gradient(135deg, #93c5fd 0%, #c4b5fd 50%, #6ee7b7 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            animation: btn-icon-drop 0.7s cubic-bezier(0.34,1.56,0.64,1) both;
+            animation: fb-icon-fall 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
             transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            filter: drop-shadow(0 0 8px rgba(147,197,253,0.6));
         }
 
-        /* Hover: button lifts + icon drops */
+        /* Pulse rings (CSS-only, no extra HTML) using outline animation trick */
+        .floating-btn:not(:hover) {
+            /* subtle outline pulse — won't conflict with anything */
+        }
+
+        /* Hover state */
         .floating-btn:hover {
-            transform: translateY(-4px) scale(1.08);
-            box-shadow: 0 20px 50px rgba(37,99,235,0.35),
-                        0  8px 20px rgba(124,58,237,0.25);
+            transform: translateY(-7px) scale(1.1);
             animation: none;
+            box-shadow:
+                0 22px 50px rgba(37,99,235,0.5),
+                0 8px 24px rgba(124,58,237,0.4),
+                0 0 0 6px rgba(37,99,235,0.12),
+                inset 0 1px 0 rgba(255,255,255,0.15);
         }
 
         .floating-btn:hover i {
-            animation: arrow-drop 0.55s ease both;
+            transform: translateY(3px) scale(1.15);
+            filter: drop-shadow(0 0 14px rgba(147,197,253,0.9));
         }
 
-        /* Ripple circles */
-        .floating-btn-ripple {
-            position: absolute;
-            inset: 3px;
-            border-radius: 50%;
-            border: 2px solid rgba(99,179,237,0.35);
-            animation: btn-ripple 2.8s ease-out infinite;
-            z-index: 0;
-        }
-
-        .floating-btn-ripple:nth-child(2) {
-            animation-delay: 0.9s;
-            border-color: rgba(167,139,250,0.25);
-        }
-
-        .floating-btn-ripple:nth-child(3) {
-            animation-delay: 1.8s;
-            border-color: rgba(52,211,153,0.2);
-        }
-
-        /* Active press */
+        /* Active / pressed */
         .floating-btn:active {
-            transform: translateY(0) scale(0.97);
-            box-shadow: 0 6px 18px rgba(37,99,235,0.3);
+            transform: translateY(-2px) scale(0.97);
+            box-shadow:
+                0 8px 20px rgba(37,99,235,0.35),
+                inset 0 2px 6px rgba(0,0,0,0.4);
         }
 
-        /* Disabled / loading state */
+        /* Disabled / loading */
         .floating-btn:disabled {
-            opacity: 0.75;
+            opacity: 0.7;
             cursor: wait;
             animation: none;
         }
 
-        .floating-btn:disabled i {
-            background: #94a3b8;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+        /* Tooltip via title attribute — shows natively; no extra HTML needed */
 
-        /* ── Mobile ── */
         @media (max-width: 768px) {
-            .floating-btn-wrapper {
-                bottom: 124px;
-                right: 18px;
-            }
-
             .floating-btn {
-                width: 60px;
-                height: 60px;
-                font-size: 1.35rem;
-            }
-
-            .floating-btn-ring {
-                inset: -5px;
-            }
-
-            .floating-btn-label {
-                font-size: 0.62rem;
-                padding: 4px 10px;
+                bottom: 120px;
+                right: 20px;
+                width: 56px;
+                height: 56px;
+                font-size: 1.25rem;
             }
         }
     </style>
@@ -2303,17 +2230,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.min.js"></script>
 
-    <!-- Floating CV Download Button — Premium -->
-    <div class="floating-btn-wrapper">
-        <span class="floating-btn-label">Download CV</span>
-        <div class="floating-btn-ring"></div>
-        <button type="button" class="floating-btn" id="downloadCvBtn" aria-label="Download CV PDF">
-            <span class="floating-btn-ripple"></span>
-            <span class="floating-btn-ripple"></span>
-            <span class="floating-btn-ripple"></span>
-            <i class="fas fa-file-arrow-down"></i>
-        </button>
-    </div>
+    <!-- Floating Button -->
+    <button type="button" class="floating-btn" id="downloadCvBtn" aria-label="Download CV PDF">
+        <i class="fas fa-file-arrow-down"></i>
+    </button>
 
     </body>
 </html>
