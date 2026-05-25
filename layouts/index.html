@@ -1526,20 +1526,14 @@
             const casesRaw = cvData.clinicalCases;
             const cases = Array.isArray(casesRaw) ? casesRaw : [];
             
-            console.log('Processing clinical cases...');
-            
             cases.forEach(cat => {
                 if (cat && cat.enabled === false) return;
                 const categoryTitle = pickLangValue(cat.category || '', cat.category_ar || '');
                 const catCases = Array.isArray(cat.cases) ? cat.cases : [];
                 
-                console.log(`Category: ${categoryTitle}, Cases count: ${catCases.length}`);
-                
                 catCases.forEach(c => {
                     const title = pickLangValue(c.alt || '', c.alt_ar || '');
                     const description = pickLangValue(c.description || '', c.description_ar || '');
-                    
-                    console.log(`Processing case: "${title}"`);
                     
                     flat.push({
                         categoryTitle,
@@ -1550,31 +1544,22 @@
                 });
             });
             
-            console.log(`Before filtering: ${flat.length} cases:`, flat.map(f => f.title));
-            
-            // Final filtering to remove duplicates - use normalized comparison
             const seenTitles = new Set();
             const finalFlat = [];
             
             flat.forEach(item => {
                 const normalizedTitle = (item.title || '').trim().toLowerCase();
-                console.log(`Checking normalized title: "${normalizedTitle}"`);
                 
                 if (!seenTitles.has(normalizedTitle)) {
-                    console.log(`Adding unique case: "${item.title}"`);
                     seenTitles.add(normalizedTitle);
                     finalFlat.push(item);
-                } else {
-                    console.log(`Removing duplicate case: "${item.title}"`);
-                }
+                } 
             });
             
-            console.log(`After filtering: ${finalFlat.length} cases:`, finalFlat.map(f => f.title));
             return finalFlat;
         }
 
         async function generateCvPdf() {
-            console.log('cvData:', cvData);
             const hero = (cvData.hero || {});
             const skills = (cvData.skills || {});
             const education = (cvData.education || {});
@@ -1597,6 +1582,7 @@
             const cases = buildCasesFlatList();
             const maxCaseImages = 20;
             const casePages = [];
+            
             for (let i = 0; i < cases.length; i++) {
                 const item = cases[i];
                 let caseImage = null;
@@ -1609,44 +1595,47 @@
                 }
 
                 const textParts = [];
-                if (item.categoryTitle) textParts.push({ text: item.categoryTitle, bold: true, fontSize: 20, color: '#3b82f6', alignment: 'center', margin: [0, 0, 0, 10] });
+                if (item.categoryTitle) textParts.push({ text: item.categoryTitle, bold: true, fontSize: 18, color: '#3b82f6', alignment: 'center', margin: [0, 0, 0, 6] });
                 
-                if (item.title) textParts.push({ text: item.title, bold: true, fontSize: 16, color: '#ffffff', alignment: 'center', margin: [0, 8, 0, 0] });
+                if (item.title) textParts.push({ text: item.title, bold: true, fontSize: 16, color: '#ffffff', alignment: 'center', margin: [0, 0, 0, 6] });
                 
                 if (item.description) {
                     const normalizedTitle = (item.title || '').trim().toLowerCase();
                     const normalizedDescription = (item.description || '').trim().toLowerCase();
                     
                     if (normalizedDescription !== normalizedTitle) {
-                        textParts.push({ text: item.description, fontSize: 12, color: '#9ca3af', alignment: 'center', margin: [0, 12, 0, 0] });
+                        textParts.push({ text: item.description, fontSize: 12, color: '#9ca3af', alignment: 'center', margin: [0, 0, 0, 0] });
                     }
                 }
-                
-                if (!caseImage && item.photo) textParts.push({ text: item.photo, color: '#3b82f6', fontSize: 9, alignment: 'center' });
 
                 const pageContent = [];
-                
-                if (caseImage) {
-                    pageContent.push({
-                        image: caseImage,
-                        width: 450, 
-                        alignment: 'center',
-                        margin: [0, 20, 0, 20]
-                    });
-                }
                 
                 if (textParts.length > 0) {
                     pageContent.push({
                         stack: textParts,
+                        alignment: 'center',
+                        margin: [0, 0, 0, 15]
+                    });
+                }
+
+                if (caseImage) {
+                    pageContent.push({
+                        image: caseImage,
+                        // This fit constraint ensures the image is maximized proportionally
+                        // but will never overflow the page dimensions (width 495, height 580)
+                        fit: [495, 580], 
                         alignment: 'center'
                     });
+                } else if (item.photo) {
+                    pageContent.push({ text: item.photo, color: '#3b82f6', fontSize: 9, alignment: 'center' });
                 }
 
                 if (pageContent.length > 0) {
                     casePages.push({
-                        pageBreak: i > 0 ? 'before' : undefined,
+                        pageBreak: 'before', // Ensures exactly ONE case per page
                         stack: pageContent,
-                        margin: [40, 60, 40, 60]
+                        unbreakable: true, // Forces text and photo to not separate across pages
+                        margin: [0, 20, 0, 0]
                     });
                 }
             }
@@ -1671,6 +1660,121 @@
                 const event = t.event || '';
                 return { text: year + event };
             });
+
+            // ---------------- PAGE 1 ---------------- //
+            const page1Hero = {
+                stack: [
+                    profileImageDataUrl ? { 
+                        image: profileImageDataUrl, 
+                        width: 150, 
+                        alignment: 'center',
+                        margin: [0, 0, 0, 20]
+                    } : { text: '', width: 0 },
+                    { text: name.toUpperCase(), style: 'headerName', alignment: 'center' },
+                    { text: role, style: 'headerRole', alignment: 'center', margin: [0, 8, 0, 6] },
+                    graduation ? { text: graduation, style: 'headerGraduation', alignment: 'center' } : null,
+                    {
+                        canvas: [
+                            { type: 'line', x1: 200, y1: 0, x2: 315, y2: 0, lineWidth: 2, lineColor: '#3b82f6' }
+                        ],
+                        alignment: 'center',
+                        margin: [0, 15, 0, 15]
+                    },
+                    {
+                        stack: contactLines,
+                        alignment: 'center',
+                        margin: [0, 0, 0, 10]
+                    }
+                ].filter(Boolean),
+                margin: [0, 80, 0, 0] // Centered visually on page 1
+            };
+
+            // ---------------- PAGE 2 ---------------- //
+            const page2Skills = {
+                pageBreak: 'before',
+                stack: [
+                    { text: 'PROFESSIONAL SKILLS', style: 'sectionHeader', alignment: 'center' },
+                    {
+                        canvas: [
+                            { type: 'line', x1: 235, y1: 0, x2: 280, y2: 0, lineWidth: 2, lineColor: '#3b82f6' }
+                        ],
+                        alignment: 'center',
+                        margin: [0, 15, 0, 40]
+                    },
+                    
+                    clinicalSkills.length > 0 ? {
+                        stack: [
+                            { text: 'Clinical Skills', style: 'subsectionHeader', alignment: 'center' },
+                            { text: clinicalSkills.map(x => x.text).join('  •  '), style: 'skillItem', alignment: 'center', margin: [0, 8, 0, 30] }
+                        ]
+                    } : null,
+                    
+                    digitalSkills.length > 0 ? {
+                        stack: [
+                            { text: 'Digital Skills', style: 'subsectionHeader', alignment: 'center' },
+                            { text: digitalSkills.map(x => x.text).join('  •  '), style: 'skillItem', alignment: 'center', margin: [0, 8, 0, 30] }
+                        ]
+                    } : null,
+                    
+                    softSkills.length > 0 ? {
+                        stack: [
+                            { text: 'Soft Skills', style: 'subsectionHeader', alignment: 'center' },
+                            { text: softSkills.map(x => x.text).join('  •  '), style: 'skillItem', alignment: 'center', margin: [0, 8, 0, 10] }
+                        ]
+                    } : null
+                ].filter(Boolean),
+                margin: [0, 60, 0, 0]
+            };
+
+            // ---------------- PAGE 3 ---------------- //
+            const page3Education = {
+                pageBreak: 'before',
+                stack: [
+                    { text: 'EDUCATION & CAREER', style: 'sectionHeader', alignment: 'center' },
+                    {
+                        canvas: [
+                            { type: 'line', x1: 235, y1: 0, x2: 280, y2: 0, lineWidth: 2, lineColor: '#3b82f6' }
+                        ],
+                        alignment: 'center',
+                        margin: [0, 15, 0, 40]
+                    },
+                    
+                    education.university ? {
+                        stack: [
+                            { text: education.university, style: 'universityName', alignment: 'center' },
+                            education.graduation_year ? { 
+                                text: `Graduated: ${education.graduation_year}`, 
+                                style: 'graduationYear',
+                                alignment: 'center',
+                                margin: [0, 8, 0, 35]
+                            } : null
+                        ].filter(Boolean)
+                    } : null,
+                    
+                    timeline.length > 0 ? {
+                        stack: timeline.map(item => ({
+                            text: item.text, style: 'timelineItem', alignment: 'center', margin: [0, 0, 0, 12]
+                        }))
+                    } : null
+                ].filter(Boolean),
+                margin: [0, 60, 0, 0]
+            };
+
+            // ---------------- PAGE 4 ---------------- //
+            const page4Cover = casePages.length > 0 ? {
+                pageBreak: 'before',
+                stack: [
+                    { text: 'CLINICAL CASES PORTFOLIO', style: 'coverTitle', alignment: 'center' },
+                    {
+                        canvas: [
+                            { type: 'line', x1: 180, y1: 0, x2: 335, y2: 0, lineWidth: 3, lineColor: '#3b82f6' }
+                        ],
+                        alignment: 'center',
+                        margin: [0, 25, 0, 0]
+                    }
+                ],
+                margin: [0, 280, 0, 0] // Centered perfectly in the middle of page 4
+            } : null;
 
             const docDefinition = {
                 pageSize: 'A4',
@@ -1715,141 +1819,13 @@
                     };
                 },
                 content: [
-                    // Header Section
-                    {
-                        stack: [
-                            profileImageDataUrl ? { 
-                                image: profileImageDataUrl, 
-                                width: 150, 
-                                alignment: 'center',
-                                margin: [0, 0, 0, 20]
-                            } : { text: '', width: 0 },
-                            { text: name.toUpperCase(), style: 'headerName', alignment: 'center' },
-                            { text: role, style: 'headerRole', alignment: 'center', margin: [0, 8, 0, 6] },
-                            graduation ? { text: graduation, style: 'headerGraduation', alignment: 'center' } : null,
-                            {
-                                canvas: [
-                                    { type: 'line', x1: 200, y1: 0, x2: 315, y2: 0, lineWidth: 2, lineColor: '#3b82f6' }
-                                ],
-                                alignment: 'center',
-                                margin: [0, 15, 0, 15]
-                            },
-                            {
-                                stack: contactLines,
-                                alignment: 'center',
-                                margin: [0, 0, 0, 10]
-                            }
-                        ].filter(Boolean),
-                        margin: [0, 0, 0, 40]
-                    },
+                    page1Hero,
+                    page2Skills,
+                    page3Education,
+                    page4Cover,
+                    ...(casePages.length > 0 ? casePages : []),
                     
-                    // Professional divider
-                    {
-                        canvas: [
-                            { type: 'rect', x: 0, y: 0, w: 515, h: 1, color: '#374151' }
-                        ],
-                        margin: [0, 0, 0, 30]
-                    },
-
-                    // Skills Section
-                    {
-                        stack: [
-                            { text: 'PROFESSIONAL SKILLS', style: 'sectionHeader', alignment: 'center' },
-                            {
-                                canvas: [
-                                    { type: 'line', x1: 235, y1: 0, x2: 280, y2: 0, lineWidth: 2, lineColor: '#3b82f6' }
-                                ],
-                                alignment: 'center',
-                                margin: [0, 10, 0, 20]
-                            },
-                            
-                            clinicalSkills.length > 0 ? {
-                                stack: [
-                                    { text: 'Clinical Skills', style: 'subsectionHeader', alignment: 'center' },
-                                    { text: clinicalSkills.map(x => x.text).join('  •  '), style: 'skillItem', alignment: 'center', margin: [0, 5, 0, 20] }
-                                ]
-                            } : null,
-                            
-                            digitalSkills.length > 0 ? {
-                                stack: [
-                                    { text: 'Digital Skills', style: 'subsectionHeader', alignment: 'center' },
-                                    { text: digitalSkills.map(x => x.text).join('  •  '), style: 'skillItem', alignment: 'center', margin: [0, 5, 0, 20] }
-                                ]
-                            } : null,
-                            
-                            softSkills.length > 0 ? {
-                                stack: [
-                                    { text: 'Soft Skills', style: 'subsectionHeader', alignment: 'center' },
-                                    { text: softSkills.map(x => x.text).join('  •  '), style: 'skillItem', alignment: 'center', margin: [0, 5, 0, 20] }
-                                ]
-                            } : null
-                        ].filter(Boolean)
-                    },
-
-                    // Separator
-                    {
-                        canvas: [
-                            { type: 'rect', x: 0, y: 0, w: 515, h: 1, color: '#374151' }
-                        ],
-                        margin: [0, 10, 0, 30]
-                    },
-
-                    // Education Section
-                    {
-                        stack: [
-                            { text: 'EDUCATION & CAREER', style: 'sectionHeader', alignment: 'center' },
-                            {
-                                canvas: [
-                                    { type: 'line', x1: 235, y1: 0, x2: 280, y2: 0, lineWidth: 2, lineColor: '#3b82f6' }
-                                ],
-                                alignment: 'center',
-                                margin: [0, 10, 0, 25]
-                            },
-                            
-                            education.university ? {
-                                stack: [
-                                    { text: education.university, style: 'universityName', alignment: 'center' },
-                                    education.graduation_year ? { 
-                                        text: `Graduated: ${education.graduation_year}`, 
-                                        style: 'graduationYear',
-                                        alignment: 'center',
-                                        margin: [0, 6, 0, 20]
-                                    } : null
-                                ].filter(Boolean)
-                            } : null,
-                            
-                            timeline.length > 0 ? {
-                                stack: timeline.map(item => ({
-                                    text: item.text, style: 'timelineItem', alignment: 'center', margin: [0, 0, 0, 8]
-                                }))
-                            } : null
-                        ].filter(Boolean)
-                    },
-                    
-                    // Separator before cases
-                    casePages.length > 0 ? {
-                        canvas: [
-                            { type: 'rect', x: 0, y: 0, w: 515, h: 1, color: '#374151' }
-                        ],
-                        margin: [0, 30, 0, 0]
-                    } : null,
-
-                    // Clinical Cases Section
-                    casePages.length > 0 ? {
-                        stack: [
-                            { text: 'CLINICAL CASES PORTFOLIO', style: 'sectionHeader', alignment: 'center', pageBreak: 'before', margin: [0, 0, 0, 10] },
-                            {
-                                canvas: [
-                                    { type: 'line', x1: 180, y1: 0, x2: 335, y2: 0, lineWidth: 2, lineColor: '#3b82f6' }
-                                ],
-                                alignment: 'center',
-                                margin: [0, 0, 0, 30]
-                            },
-                            ...casePages
-                        ]
-                    } : null,
-                    
-                    // Portfolio website section
+                    // Portfolio website section (Last Page)
                     ...(casePages.length > 0 ? [{
                         pageBreak: 'before',
                         stack: [
@@ -1859,7 +1835,7 @@
                                     { type: 'line', x1: 200, y1: 0, x2: 315, y2: 0, lineWidth: 2, lineColor: '#3b82f6' }
                                 ],
                                 alignment: 'center',
-                                margin: [0, 0, 0, 30]
+                                margin: [0, 0, 0, 40]
                             },
                             { text: 'For complete portfolio and additional cases', style: 'portfolioText', alignment: 'center', margin: [0, 0, 0, 15] },
                             { text: 'please visit my professional website:', style: 'portfolioText', alignment: 'center', margin: [0, 0, 0, 10] },
@@ -1871,7 +1847,7 @@
                                 decoration: 'underline'
                             }
                         ],
-                        margin: [0, 100, 0, 0]
+                        margin: [0, 250, 0, 0]
                     }] : [])
                 ].filter(Boolean),
                 styles: {
@@ -1893,45 +1869,51 @@
                         fontStyle: 'italic'
                     },
                     sectionHeader: { 
-                        fontSize: 18, 
+                        fontSize: 20, 
                         bold: true, 
                         color: '#ffffff',
                         letterSpacing: 2
                     },
+                    coverTitle: {
+                        fontSize: 26, 
+                        bold: true, 
+                        color: '#ffffff',
+                        letterSpacing: 3
+                    },
                     subsectionHeader: { 
-                        fontSize: 14, 
+                        fontSize: 15, 
                         bold: true, 
                         color: '#3b82f6',
                         marginBottom: 5
                     },
                     universityName: { 
-                        fontSize: 16, 
+                        fontSize: 18, 
                         bold: true, 
                         color: '#f3f4f6'
                     },
                     graduationYear: { 
-                        fontSize: 12, 
+                        fontSize: 13, 
                         color: '#9ca3af',
                         fontStyle: 'italic'
                     },
                     skillItem: { 
-                        fontSize: 11, 
+                        fontSize: 12, 
                         color: '#d1d5db'
                     },
                     timelineItem: { 
-                        fontSize: 12, 
+                        fontSize: 13, 
                         color: '#e5e7eb',
                         lineHeight: 1.5
                     },
                     portfolioText: { 
-                        fontSize: 12, 
+                        fontSize: 13, 
                         color: '#9ca3af'
                     },
                     portfolioLink: { 
-                        fontSize: 14, 
+                        fontSize: 15, 
                         bold: true
                     },
-                    small: { fontSize: 10, color: '#d1d5db' },
+                    small: { fontSize: 11, color: '#d1d5db' },
                     headerText: { 
                         fontSize: 9, 
                         color: '#4b5563',
@@ -1951,11 +1933,8 @@
             const fileNameSafe = (name || 'cv').toString().replace(/[^a-z0-9\-_ ]/gi, '').trim().replace(/\s+/g, '_');
             
             try {
-                console.log('Creating PDF with docDefinition:', docDefinition);
                 const pdfDoc = pdfMake.createPdf(docDefinition);
-                console.log('PDF document created, downloading...');
                 pdfDoc.download(`${fileNameSafe || 'cv'}_${CV_LANG}.pdf`);
-                console.log('PDF download initiated');
             } catch (error) {
                 console.error('Error creating PDF:', error);
                 throw error;
@@ -1972,16 +1951,14 @@
             initLanguage();
             initNavigation();
             initFooter();
-            // Download CV button
+            
             document.getElementById('downloadCvBtn').addEventListener('click', async function() {
                 const btn = this;
                 const oldHtml = btn.innerHTML;
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 try {
-                    console.log('Starting PDF generation...');
                     await generateCvPdf();
-                    console.log('PDF generated successfully');
                 } catch (error) {
                     console.error('PDF generation failed:', error);
                     alert('Failed to generate PDF. Please check console for details.');
